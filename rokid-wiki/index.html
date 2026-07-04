@@ -585,7 +585,6 @@ const AI_MODELS = [
 
 const FAQ_ITEMS = [
   {q:"多少钱？",a:"官方零售价 ¥3,299（标准版含 AR 显示）。京东/天猫/抖音旗舰店有售。大促可能优惠。"},
-  {q:"之前不是说 ¥2,499 吗？",a:"¥2,499 是 2024.11 发布会预售价。2025 Q2 正式发售后调整为 ¥3,299。"},
   {q:"近视能戴吗？",a:"可以。磁吸镜框支持近视/散光定制，购机常赠送「0元磁吸配镜服务」。合作门店：毛源昌等。单独配镜 ¥200–400。"},
   {q:"续航多久？",a:"官方标称音乐播放5-6h、通话4h。实测轻度2-3h，AI重度不足2h。210mAh电池。快充10min→90%。充电盒（¥399另购）补电10+次。"},
   {q:"录像时别人知道吗？",a:"知道。硬件指示灯强制亮起，有防遮挡机制。数据全链路加密。"},
@@ -611,7 +610,6 @@ const OBJECTION_ITEMS = [
   {q:"\"华为也有AI眼镜，还更轻\"",a:"\"华为/小米没有AR显示屏，是不同品类——'耳机+相机'组合。乐奇有光波导AR屏，翻译字幕、导航箭头、提词文字看得见。如果要带屏的AI眼镜，这个价位只有乐奇和影目GO3。\""},
   {q:"\"小米才¥1,999\"",a:"\"小米便宜但没有AR显示屏。乐奇¥3,299多出¥1,300换来一块光波导AR屏+5个大模型+支付宝+高德导航。完全是两种产品。\""},
   {q:"\"没听过这个品牌\"",a:"\"Rokid 成立10年专注 AR/AI。2025年销量30万台，Q1市占21%行业第一。投资方含蓝思科技、康耐特光学。默茨和马克龙都亲自试戴过。行业头部品牌。\""},
-  {q:"\"发布会不是说 ¥2,499？\"",a:"\"¥2,499 是 2024.11 发布会早期预售价。2025 Q2 量产后因光波导+Micro-LED 成本，调整为 ¥3,299。同配置产品中仍是最有竞争力的——有屏+摄像头+支付宝，只此一家。\""},
 ];
 
 const COMPARE_TABLE = [
@@ -933,9 +931,8 @@ function PriceSlide() {
         {tab === 'main' && <div className="tab-content">
           <div className="stat-row">
             <div className="stat-card"><div className="sc-val">¥3,299</div><div className="sc-lbl">官方零售价</div></div>
-            <div className="stat-card"><div className="sc-val">¥2,499</div><div className="sc-lbl">早期预售（已调整）</div></div>
           </div>
-          <div className="hl red"><strong>价格说明：</strong>发布会预售价 ¥2,499（2024.11），2025 Q2 调整为 ¥3,299。如客户问 ¥2,499，说明是早期发布会公布价。</div>
+          <div className="hl green"><strong>价格说明：</strong>官方零售价 ¥3,299，标准版含 AR 显示。京东/天猫/抖音旗舰店有售。</div>
         </div>}
         {tab === 'bolon' && <div className="tab-content">
           <div className="hl orange"><strong>BOLON AI</strong> = Rokid × 暴龙战略合作。暴龙设计外观，Rokid 提供 AI 算法。无 AR 屏，更轻 38.5g。</div>
@@ -1123,7 +1120,7 @@ function FAQSlide({ search }) {
 }
 
 function ObjectionSlide({ search }) {
-  const sq = search && ['太贵','续航','屏幕','隐私','华为','小米','品牌','2499'].some(k=>search.includes(k)) ? search : '';
+  const sq = search && ['太贵','续航','屏幕','隐私','华为','小米','品牌'].some(k=>search.includes(k)) ? search : '';
   return (
     <div className="slide section-slide" id="objection" data-search>
       <div className="slide-content">
@@ -1167,7 +1164,7 @@ function ServiceSlide() {
             <h3>🏬 渠道</h3>
             <table><tbody><tr><th>线上</th><th>店铺</th></tr><tr><td>京东</td><td>ROKID 自营旗舰店</td></tr><tr><td>天猫</td><td>Rokid 官方旗舰店</td></tr><tr><td>抖音</td><td>Rokid 官方旗舰店</td></tr></tbody></table>
             <table><tbody><tr><th>线下</th><th>详情</th></tr><tr><td>覆盖</td><td>全国34省 1000+门店</td></tr><tr><td>合作</td><td>毛源昌、红星眼镜</td></tr><tr><td>山姆</td><td>北京/深圳/宁波等</td></tr></tbody></table>
-            <div className="hl red"><strong>注意：</strong>宝岛眼镜是台湾渠道。大陆不提及。</div>
+            <div className="hl green"><strong>售后：</strong>12个月整机质保。7天退/15天换（三包）。30天可退。另有 RokidCare 碎屏保障。</div>
           </div>
           <div className="glass-card" id="yodaos" data-search>
             <h3>💻 YodaOS + 售后</h3>
