@@ -174,7 +174,7 @@ body{
 .slide-tag.pink{background:rgba(255,45,85,0.15);color:var(--pink)}
 
 .slide-title{font-size:48px;font-weight:700;letter-spacing:-1px;margin-bottom:8px;line-height:52px}
-.slide-subtitle{font-size:18px;color:rgba(255,255,255,0.5);margin-bottom:32px}
+.slide-subtitle{font-size:18px;color:rgba(255,255,255,0.65);margin-bottom:32px}
 .section-slide.light .slide-subtitle{color:var(--text2)}
 
 /* ===== Big Stat Cards (glassmorphism) ===== */
@@ -187,7 +187,7 @@ body{
 }
 .stat-card:hover{background:rgba(255,255,255,0.08);transform:translateY(-4px);border-color:rgba(255,255,255,0.15)}
 .stat-card .sc-val{font-size:40px;font-weight:700;color:var(--link-dark);letter-spacing:-1px}
-.stat-card .sc-lbl{font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px}
+.stat-card .sc-lbl{font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px}
 .section-slide.light .stat-card{background:var(--bg);border-color:var(--gray5)}
 .section-slide.light .stat-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.06)}
 .section-slide.light .stat-card .sc-lbl{color:var(--text2)}
@@ -195,7 +195,7 @@ body{
 /* ===== Spec Bars (dark) ===== */
 .spec-bars{display:grid;gap:10px;margin:16px 0}
 .spec-bar{display:flex;align-items:center;gap:12px}
-.spec-bar .name{width:80px;font-size:13px;color:rgba(255,255,255,0.5);flex-shrink:0;font-weight:500}
+.spec-bar .name{width:80px;font-size:13px;color:rgba(255,255,255,0.65);flex-shrink:0;font-weight:500}
 .section-slide.light .spec-bar .name{color:var(--text2)}
 .spec-bar .track{flex:1;height:24px;background:rgba(255,255,255,0.06);border-radius:980px;overflow:hidden}
 .section-slide.light .spec-bar .track{background:var(--gray6)}
@@ -222,7 +222,7 @@ body{
 .section-slide.light .glass-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.06)}
 .glass-card h3{font-size:20px;font-weight:600;margin-bottom:10px;color:var(--text-on-dark)}
 .section-slide.light .glass-card h3{color:var(--text)}
-.glass-card p{font-size:14px;color:rgba(255,255,255,0.5);line-height:22px}
+.glass-card p{font-size:14px;color:rgba(255,255,255,0.6);line-height:22px}
 .section-slide.light .glass-card p{color:var(--text2)}
 
 /* ===== Grid Layouts ===== */
@@ -233,7 +233,7 @@ body{
 /* ===== Tabs ===== */
 .tabs{display:flex;gap:4px;margin:12px 0;background:rgba(255,255,255,0.06);border-radius:980px;padding:3px;width:fit-content;flex-wrap:wrap}
 .section-slide.light .tabs{background:var(--gray6)}
-.tab{padding:7px 14px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.5);border-radius:980px;transition:all 0.2s var(--ease);font-weight:500;white-space:nowrap;border:none;background:transparent;font-family:var(--font)}
+.tab{padding:7px 14px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6);border-radius:980px;transition:all 0.2s var(--ease);font-weight:500;white-space:nowrap;border:none;background:transparent;font-family:var(--font)}
 .tab:hover{color:#fff}
 .section-slide.light .tab:hover{color:var(--text)}
 .tab.active{background:var(--cta);color:#fff;font-weight:600}
@@ -241,8 +241,8 @@ body{
 
 /* ===== Table ===== */
 table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;border-radius:14px;overflow:hidden}
-th{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);padding:8px 12px;text-align:left;font-weight:600;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08)}
-td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.7)}
+th{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.75);padding:8px 12px;text-align:left;font-weight:600;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08)}
+td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.8)}
 .section-slide.light th{background:var(--bg2);color:var(--text);border-bottom:1px solid var(--gray5)}
 .section-slide.light td{border-bottom:1px solid var(--gray5);color:var(--text2)}
 tr:last-child td{border-bottom:none}
@@ -259,11 +259,11 @@ td:first-child{font-weight:600;color:#fff}
 .acc-header:hover{background:rgba(255,255,255,0.03)}
 .acc-icon{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--cta),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
 .acc-icon.warn{background:linear-gradient(135deg,var(--red),var(--orange))}
-.acc-arrow{margin-left:auto;color:rgba(255,255,255,0.3);transition:transform 0.3s var(--ease);font-size:12px}
+.acc-arrow{margin-left:auto;color:rgba(255,255,255,0.45);transition:transform 0.3s var(--ease);font-size:12px}
 .acc-item.open .acc-arrow{transform:rotate(90deg)}
 .acc-body{max-height:0;overflow:hidden;transition:max-height 0.4s var(--ease)}
 .acc-item.open .acc-body{max-height:1000px}
-.acc-body-inner{padding:2px 18px 14px 54px;color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6}
+.acc-body-inner{padding:2px 18px 14px 54px;color:rgba(255,255,255,0.65);font-size:14px;line-height:1.6}
 .section-slide.light .acc-body-inner{color:var(--text2)}
 
 /* ===== Highlight ===== */
@@ -284,7 +284,7 @@ td:first-child{font-weight:600;color:#fff}
 
 /* ===== Compare Bars ===== */
 .compare-row{display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:10px;margin:6px 0;font-size:13px}
-.compare-row .cname{color:rgba(255,255,255,0.5);text-align:right;font-weight:500}
+.compare-row .cname{color:rgba(255,255,255,0.65);text-align:right;font-weight:500}
 .section-slide.light .compare-row .cname{color:var(--text2)}
 .compare-row .ctrack{height:18px;background:rgba(255,255,255,0.06);border-radius:980px;overflow:hidden}
 .section-slide.light .compare-row .ctrack{background:var(--gray6)}
@@ -299,7 +299,7 @@ td:first-child{font-weight:600;color:#fff}
 .scene-card img{width:100%;height:140px;object-fit:cover}
 .scene-card .sc-body{padding:16px}
 .scene-card .sc-title{font-weight:600;color:var(--text-on-dark);margin-bottom:4px;font-size:15px}
-.scene-card .sc-desc{font-size:13px;color:rgba(255,255,255,0.4)}
+.scene-card .sc-desc{font-size:13px;color:rgba(255,255,255,0.55)}
 
 /* ===== Persona ===== */
 .persona-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:16px 0}
@@ -307,7 +307,7 @@ td:first-child{font-weight:600;color:#fff}
 .persona-card:hover{background:rgba(255,255,255,0.06);transform:translateY(-3px)}
 .persona-card .emoji{font-size:28px;margin-bottom:6px}
 .persona-card .role{font-weight:600;color:var(--text-on-dark);font-size:14px;margin-bottom:2px}
-.persona-card .scene{font-size:11px;color:rgba(255,255,255,0.4)}
+.persona-card .scene{font-size:11px;color:rgba(255,255,255,0.55)}
 
 /* ===== Selling Points ===== */
 .sp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:16px 0}
@@ -317,7 +317,7 @@ td:first-child{font-weight:600;color:#fff}
 .sp-card:hover::before{opacity:1}
 .sp-card .sp-icon{font-size:28px;margin-bottom:8px}
 .sp-card .sp-title{font-weight:600;color:var(--text-on-dark);font-size:15px;margin-bottom:4px}
-.sp-card .sp-desc{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.5}
+.sp-card .sp-desc{font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5}
 
 /* ===== Search button (floating) ===== */
 .search-fab{
@@ -346,6 +346,52 @@ td:first-child{font-weight:600;color:#fff}
 .search-hidden{display:none!important}
 
 /* ===== Mobile ===== */
+
+/* ===== Light section overrides (comprehensive) ===== */
+.section-slide.light{background:var(--bg2);color:var(--text)}
+.section-slide.light h2,.section-slide.light h3,.section-slide.light strong{color:var(--text)}
+.section-slide.light p{color:var(--text2)}
+.section-slide.light .slide-title{color:var(--text)}
+.section-slide.light .slide-subtitle{color:var(--text2)}
+.section-slide.light .stat-card{background:var(--bg);border-color:var(--gray5)}
+.section-slide.light .stat-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+.section-slide.light .stat-card .sc-val{color:var(--cta)}
+.section-slide.light .stat-card .sc-lbl{color:var(--text2)}
+.section-slide.light .spec-bar .name{color:var(--text2)}
+.section-slide.light .spec-bar .track{background:var(--gray6)}
+.section-slide.light .glass-card{background:var(--bg);border-color:var(--gray5)}
+.section-slide.light .glass-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+.section-slide.light .glass-card h3{color:var(--text)}
+.section-slide.light .glass-card p{color:var(--text2)}
+.section-slide.light .tabs{background:var(--gray6)}
+.section-slide.light .tab{color:var(--text2)}
+.section-slide.light .tab:hover{color:var(--text)}
+.section-slide.light th{background:var(--bg2);color:var(--text);border-bottom:1px solid var(--gray5)}
+.section-slide.light td{border-bottom:1px solid var(--gray5);color:var(--text2)}
+.section-slide.light td:first-child{color:var(--text)}
+.section-slide.light tr:hover td{background:var(--bg2)}
+.section-slide.light .acc-item{background:var(--bg)}
+.section-slide.light .acc-item:hover{background:var(--bg2)}
+.section-slide.light .acc-header{color:var(--text)}
+.section-slide.light .acc-header:hover{background:rgba(0,113,227,0.03)}
+.section-slide.light .acc-arrow{color:var(--text2)}
+.section-slide.light .acc-body-inner{color:var(--text2)}
+.section-slide.light .chart-box{background:var(--bg);border:1px solid var(--gray5)}
+.section-slide.light .hl{color:var(--text)}
+.section-slide.light .compare-row .cname{color:var(--text2)}
+.section-slide.light .compare-row .ctrack{background:var(--gray6)}
+.section-slide.light .compare-row .cval{color:var(--text)}
+.section-slide.light .sp-card{background:var(--bg);border-color:var(--gray5)}
+.section-slide.light .sp-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+.section-slide.light .sp-card .sp-title{color:var(--text)}
+.section-slide.light .sp-card .sp-desc{color:var(--text2)}
+.section-slide.light .scene-card{background:var(--bg);border-color:var(--gray5)}
+.section-slide.light .scene-card .sc-title{color:var(--text)}
+.section-slide.light .scene-card .sc-desc{color:var(--text2)}
+.section-slide.light .persona-card{background:var(--bg);border-color:var(--gray5)}
+.section-slide.light .persona-card .role{color:var(--text)}
+.section-slide.light .persona-card .scene{color:var(--text2)}
+
 /* ===== Mobile Bottom Tab Bar (replaces dock on mobile) ===== */
 .mobile-tabbar{
   display:none;
@@ -637,10 +683,10 @@ const THREAT_TIERS = [
   {tier:"Tier 1",tierColor:"var(--red)",product:"千问S1 ¥3,499",reason:"阿里旗下，京东618第2。有全彩Micro-LED 4000nits+通义千问+支付宝+热插拔双电池。比乐奇贵¥200但全彩+阿里生态是杀手锏。"},
   {tier:"Tier 2",tierColor:"var(--orange)",product:"千问G1 ¥2,899",reason:"无屏不是直接竞品，但性价比极高+阿里生态。话术：千问G1没屏幕，乐奇有AR屏看得见。"},
   {tier:"Tier 2",tierColor:"var(--orange)",product:"雷鸟iO（Q3预告）",reason:"单绿显示+轻量化定位相似。但传闻无摄像头。"},
-  {tier:"Tier 3",tierColor:"var(--gray)",product:"StarV Air2 ¥1,699",reason:"更轻但无摄像头无支付，已并入雷鸟。"},
-  {tier:"Tier 3",tierColor:"var(--gray)",product:"影目AIR3 ¥4,999",reason:"全彩但135g太重，续航仅1.5-2h。"},
-  {tier:"Tier 3",tierColor:"var(--gray)",product:"雷鸟X3 Pro ¥8,999",reason:"价格2.7倍，完全不同价格带。"},
-  {tier:"Tier 3",tierColor:"var(--gray)",product:"XREAL One Pro ¥4,299",reason:"分体式观影AR，无内置电池无摄像头。"},
+  {tier:"Tier 3",tierColor:"#8E8E93",product:"StarV Air2 ¥1,699",reason:"更轻但无摄像头无支付，已并入雷鸟。"},
+  {tier:"Tier 3",tierColor:"#8E8E93",product:"影目AIR3 ¥4,999",reason:"全彩但135g太重，续航仅1.5-2h。"},
+  {tier:"Tier 3",tierColor:"#8E8E93",product:"雷鸟X3 Pro ¥8,999",reason:"价格2.7倍，完全不同价格带。"},
+  {tier:"Tier 3",tierColor:"#8E8E93",product:"XREAL One Pro ¥4,299",reason:"分体式观影AR，无内置电池无摄像头。"},
 ];
 
 const RANKING_618 = [
@@ -922,7 +968,7 @@ function SpecsSlide({ animate }) {
 function PriceSlide() {
   const [tab, setTab] = useState('main');
   return (
-    <div className="slide section-slide light" id="price" data-search>
+    <div className="slide section-slide alt" id="price" data-search>
       <div className="slide-content">
         <div className="slide-tag green">价格</div>
         <div className="slide-title">¥3,299 起</div>
