@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乐奇 AI 眼镜 · 体验顾问知识库</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --red:#FF383C;--orange:#FF8D28;--yellow:#FFCC00;--green:#34C759;
+  --mint:#00C8B3;--teal:#00C3D0;--cyan:#00C0E8;--blue:#0088FF;
+  --indigo:#6155F5;--purple:#CB30E0;--pink:#FF2D55;
+  --gray:#8E8E93;--gray2:#AEAEB2;--gray3:#C7C7CC;--gray5:#E5E5EA;--gray6:#F2F2F7;
+  --bg:#FFFFFF;--bg2:#F5F5F7;--bg-dark:#0a0a0c;
+  --text:#1D1D1F;--text2:#6E6E73;--text3:rgba(0,0,0,0.56);
+  --text-on-dark:#F5F5F7;
+  --cta:#0071E3;--link-dark:#2997FF;
+  --font:"SF Pro Text","SF Pro Icons","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --ease:cubic-bezier(0.32,0.72,0,1);
+  --dur:0.5s;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  background:var(--bg-dark);color:var(--text-on-dark);
+  font-family:var(--font);font-weight:400;
+  line-height:1.5;letter-spacing:-0.3px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+::-webkit-scrollbar{width:0;height:0}
+
+/* ===== Dock (bottom navigation, macOS/iOS style) ===== */
+.dock{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  z-index:200;display:flex;gap:6px;padding:8px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(40px) saturate(2);
+  -webkit-backdrop-filter:blur(40px) saturate(2);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:24px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  max-width:calc(100vw - 24px);overflow-x:auto;scrollbar-width:none;
+}
+.dock::-webkit-scrollbar{display:none}
+.dock-item{
+  width:44px;height:44px;border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.3s var(--ease);
+  background:transparent;border:none;color:rgba(255,255,255,0.5);
+  font-size:20px;flex-shrink:0;position:relative;
+}
+.dock-item:hover{background:rgba(255,255,255,0.1);color:#fff;transform:translateY(-4px) scale(1.1)}
+.dock-item.active{background:var(--cta);color:#fff;transform:translateY(-2px) scale(1.05)}
+.dock-item .label{
+  position:absolute;bottom:-20px;font-size:9px;white-space:nowrap;
+  opacity:0;transition:opacity 0.2s;
+}
+.dock-item:hover .label{opacity:1}
+
+/* ===== Command Palette (⌘K) ===== */
+.cmd-overlay{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding-top:15vh;animation:fadeIn 0.2s;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.cmd-box{
+  width:90%;max-width:560px;background:rgba(30,30,32,0.95);
+  backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);
+  animation:slideUp 0.3s var(--ease);
+}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.cmd-input{
+  width:100%;padding:18px 20px 18px 52px;
+  font-size:17px;font-family:var(--font);
+  background:transparent;border:none;color:var(--text-on-dark);
+  outline:none;border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.cmd-input::placeholder{color:rgba(255,255,255,0.3)}
+.cmd-icon{position:absolute;left:20px;top:18px;font-size:18px;color:rgba(255,255,255,0.3)}
+.cmd-list{max-height:400px;overflow-y:auto;padding:8px}
+.cmd-item{
+  padding:12px 16px;border-radius:12px;cursor:pointer;
+  display:flex;align-items:center;gap:12px;
+  color:rgba(255,255,255,0.7);font-size:14px;
+  transition:background 0.15s;
+}
+.cmd-item:hover,.cmd-item.selected{background:rgba(255,255,255,0.08)}
+.cmd-item .ci-icon{font-size:18px;width:24px;text-align:center}
+.cmd-item .ci-title{flex:1}
+.cmd-item .ci-cat{font-size:11px;color:rgba(255,255,255,0.3)}
+
+/* ===== Full-screen Slide Panels ===== */
+.slides-container{
+  position:relative;width:100%;
+}
+.slide{
+  min-height:100vh;width:100%;
+  display:flex;align-items:center;justify-content:center;
+  padding:60px 24px 100px;
+  position:relative;overflow:hidden;
+}
+.slide-content{max-width:1100px;width:100%;position:relative;z-index:2}
+
+/* ===== Hero Slide ===== */
+.hero-slide{
+  background:radial-gradient(ellipse at 50% 30%,rgba(0,113,227,0.15) 0%,transparent 60%),var(--bg-dark);
+  min-height:100vh;
+}
+.hero-slide::before{
+  content:'';position:absolute;inset:0;
+  background:url('listenhub-20260704-112237-tjjolj.png') center/cover;
+  opacity:0.3;mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);
+  -webkit-mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);
+}
+.hero-content{text-align:center;position:relative;z-index:2}
+.hero-badge{
+  display:inline-block;padding:6px 16px;border-radius:980px;
+  background:rgba(0,113,227,0.15);border:1px solid rgba(0,113,227,0.3);
+  font-size:13px;color:var(--link-dark);font-weight:600;margin-bottom:20px;
+}
+.hero-title{font-size:80px;font-weight:700;line-height:84px;letter-spacing:-2px;margin-bottom:12px}
+.hero-title .grad{
+  background:linear-gradient(135deg,var(--blue),var(--purple) 50%,var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-size:200% 200%;animation:shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero-sub{font-size:22px;color:rgba(255,255,255,0.6);max-width:600px;margin:0 auto 36px;line-height:30px}
+.hero-orb{
+  display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+}
+.orb{
+  width:120px;height:120px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(20px);transition:all 0.4s var(--ease);
+  cursor:default;
+}
+.orb:hover{background:rgba(255,255,255,0.1);transform:scale(1.08);border-color:rgba(255,255,255,0.2)}
+.orb .orb-num{font-size:24px;font-weight:700;color:var(--link-dark)}
+.orb .orb-lbl{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px}
+.scroll-hint{
+  position:absolute;bottom:80px;left:50%;transform:translateX(-50%);
+  color:rgba(255,255,255,0.3);font-size:13px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.scroll-hint .arrow{animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* ===== Section Slide ===== */
+.section-slide{background:var(--bg-dark)}
+.section-slide.alt{background:linear-gradient(180deg,#0a0a0c,#121216)}
+.section-slide.light{background:var(--bg2);color:var(--text)}
+.section-slide.light h2{color:var(--text)}
+.section-slide.light p{color:var(--text2)}
+.section-slide.light strong{color:var(--text)}
+
+.slide-tag{
+  display:inline-block;padding:4px 12px;border-radius:6px;
+  font-size:12px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;
+  margin-bottom:12px;
+}
+.slide-tag.blue{background:rgba(0,136,255,0.15);color:var(--blue)}
+.slide-tag.green{background:rgba(52,199,89,0.15);color:var(--green)}
+.slide-tag.purple{background:rgba(97,85,245,0.15);color:var(--indigo)}
+.slide-tag.orange{background:rgba(255,141,40,0.15);color:var(--orange)}
+.slide-tag.pink{background:rgba(255,45,85,0.15);color:var(--pink)}
+
+.slide-title{font-size:48px;font-weight:700;letter-spacing:-1px;margin-bottom:8px;line-height:52px}
+.slide-subtitle{font-size:18px;color:rgba(255,255,255,0.5);margin-bottom:32px}
+.section-slide.light .slide-subtitle{color:var(--text2)}
+
+/* ===== Big Stat Cards (glassmorphism) ===== */
+.stat-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.stat-card{
+  flex:1;min-width:140px;padding:24px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;backdrop-filter:blur(20px);
+  transition:all 0.4s var(--ease);
+}
+.stat-card:hover{background:rgba(255,255,255,0.08);transform:translateY(-4px);border-color:rgba(255,255,255,0.15)}
+.stat-card .sc-val{font-size:40px;font-weight:700;color:var(--link-dark);letter-spacing:-1px}
+.stat-card .sc-lbl{font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px}
+.section-slide.light .stat-card{background:var(--bg);border-color:var(--gray5)}
+.section-slide.light .stat-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+.section-slide.light .stat-card .sc-lbl{color:var(--text2)}
+
+/* ===== Spec Bars (dark) ===== */
+.spec-bars{display:grid;gap:10px;margin:16px 0}
+.spec-bar{display:flex;align-items:center;gap:12px}
+.spec-bar .name{width:80px;font-size:13px;color:rgba(255,255,255,0.5);flex-shrink:0;font-weight:500}
+.section-slide.light .spec-bar .name{color:var(--text2)}
+.spec-bar .track{flex:1;height:24px;background:rgba(255,255,255,0.06);border-radius:980px;overflow:hidden}
+.section-slide.light .spec-bar .track{background:var(--gray6)}
+.spec-bar .fill{
+  height:100%;border-radius:980px;
+  display:flex;align-items:center;padding-left:10px;
+  font-size:11px;font-weight:600;color:#fff;
+  transition:width 1.5s var(--ease);width:0;
+}
+.fill.blue{background:linear-gradient(90deg,var(--cta),var(--blue))}
+.fill.green{background:linear-gradient(90deg,var(--green),var(--mint))}
+.fill.purple{background:linear-gradient(90deg,var(--indigo),var(--purple))}
+.fill.orange{background:linear-gradient(90deg,var(--orange),var(--yellow))}
+.fill.teal{background:linear-gradient(90deg,var(--teal),var(--cyan))}
+
+/* ===== Glass Card ===== */
+.glass-card{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;padding:28px;backdrop-filter:blur(20px);
+  transition:all 0.4s var(--ease);
+}
+.glass-card:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12)}
+.section-slide.light .glass-card{background:var(--bg);border-color:var(--gray5)}
+.section-slide.light .glass-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+.glass-card h3{font-size:20px;font-weight:600;margin-bottom:10px;color:var(--text-on-dark)}
+.section-slide.light .glass-card h3{color:var(--text)}
+.glass-card p{font-size:14px;color:rgba(255,255,255,0.5);line-height:22px}
+.section-slide.light .glass-card p{color:var(--text2)}
+
+/* ===== Grid Layouts ===== */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* ===== Tabs ===== */
+.tabs{display:flex;gap:4px;margin:12px 0;background:rgba(255,255,255,0.06);border-radius:980px;padding:3px;width:fit-content;flex-wrap:wrap}
+.section-slide.light .tabs{background:var(--gray6)}
+.tab{padding:7px 14px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.5);border-radius:980px;transition:all 0.2s var(--ease);font-weight:500;white-space:nowrap;border:none;background:transparent;font-family:var(--font)}
+.tab:hover{color:#fff}
+.section-slide.light .tab:hover{color:var(--text)}
+.tab.active{background:var(--cta);color:#fff;font-weight:600}
+.tab-content{padding-top:12px;animation:fadeIn 0.3s var(--ease)}
+
+/* ===== Table ===== */
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;border-radius:14px;overflow:hidden}
+th{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);padding:8px 12px;text-align:left;font-weight:600;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08)}
+td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.7)}
+.section-slide.light th{background:var(--bg2);color:var(--text);border-bottom:1px solid var(--gray5)}
+.section-slide.light td{border-bottom:1px solid var(--gray5);color:var(--text2)}
+tr:last-child td{border-bottom:none}
+td:first-child{font-weight:600;color:#fff}
+.section-slide.light td:first-child{color:var(--text)}
+
+/* ===== Accordion ===== */
+.acc-item{background:rgba(255,255,255,0.03);border-radius:14px;margin-bottom:6px;overflow:hidden;transition:all 0.2s}
+.section-slide.light .acc-item{background:var(--bg)}
+.acc-item:hover{background:rgba(255,255,255,0.06)}
+.section-slide.light .acc-item:hover{background:var(--bg2)}
+.acc-header{padding:14px 18px;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;color:var(--text-on-dark);user-select:none}
+.section-slide.light .acc-header{color:var(--text)}
+.acc-header:hover{background:rgba(255,255,255,0.03)}
+.acc-icon{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--cta),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.acc-icon.warn{background:linear-gradient(135deg,var(--red),var(--orange))}
+.acc-arrow{margin-left:auto;color:rgba(255,255,255,0.3);transition:transform 0.3s var(--ease);font-size:12px}
+.acc-item.open .acc-arrow{transform:rotate(90deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height 0.4s var(--ease)}
+.acc-item.open .acc-body{max-height:1000px}
+.acc-body-inner{padding:2px 18px 14px 54px;color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6}
+.section-slide.light .acc-body-inner{color:var(--text2)}
+
+/* ===== Highlight ===== */
+.hl{border-radius:14px;padding:12px 16px;margin:10px 0;font-size:14px;line-height:1.6}
+.hl.blue{background:rgba(0,113,227,0.1);border-left:3px solid var(--cta)}
+.hl.orange{background:rgba(255,141,40,0.1);border-left:3px solid var(--orange)}
+.hl.green{background:rgba(52,199,89,0.1);border-left:3px solid var(--green)}
+.hl.red{background:rgba(255,56,60,0.1);border-left:3px solid var(--red)}
+
+/* ===== Chart ===== */
+.chart-box{background:rgba(255,255,255,0.03);border-radius:16px;padding:16px;margin:10px 0}
+.section-slide.light .chart-box{background:var(--bg);border:1px solid var(--gray5)}
+
+/* ===== Tag ===== */
+.tag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
+.tag.official{background:rgba(52,199,89,0.15);color:var(--green)}
+.tag.media{background:rgba(255,141,40,0.15);color:var(--orange)}
+
+/* ===== Compare Bars ===== */
+.compare-row{display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+.compare-row .cname{color:rgba(255,255,255,0.5);text-align:right;font-weight:500}
+.section-slide.light .compare-row .cname{color:var(--text2)}
+.compare-row .ctrack{height:18px;background:rgba(255,255,255,0.06);border-radius:980px;overflow:hidden}
+.section-slide.light .compare-row .ctrack{background:var(--gray6)}
+.compare-row .cfill{height:100%;border-radius:980px;transition:width 1.5s var(--ease);width:0}
+.compare-row .cval{font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap;font-size:11px}
+.section-slide.light .compare-row .cval{color:var(--text)}
+
+/* ===== Scene Cards ===== */
+.scene-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0}
+.scene-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;transition:all 0.4s var(--ease)}
+.scene-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.15)}
+.scene-card img{width:100%;height:140px;object-fit:cover}
+.scene-card .sc-body{padding:16px}
+.scene-card .sc-title{font-weight:600;color:var(--text-on-dark);margin-bottom:4px;font-size:15px}
+.scene-card .sc-desc{font-size:13px;color:rgba(255,255,255,0.4)}
+
+/* ===== Persona ===== */
+.persona-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:16px 0}
+.persona-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px 12px;text-align:center;transition:all 0.3s var(--ease)}
+.persona-card:hover{background:rgba(255,255,255,0.06);transform:translateY(-3px)}
+.persona-card .emoji{font-size:28px;margin-bottom:6px}
+.persona-card .role{font-weight:600;color:var(--text-on-dark);font-size:14px;margin-bottom:2px}
+.persona-card .scene{font-size:11px;color:rgba(255,255,255,0.4)}
+
+/* ===== Selling Points ===== */
+.sp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:16px 0}
+.sp-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:24px 20px;position:relative;overflow:hidden;transition:all 0.4s var(--ease)}
+.sp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cta),var(--purple));opacity:0;transition:opacity 0.3s}
+.sp-card:hover{background:rgba(255,255,255,0.06);transform:translateY(-4px);border-color:rgba(255,255,255,0.12)}
+.sp-card:hover::before{opacity:1}
+.sp-card .sp-icon{font-size:28px;margin-bottom:8px}
+.sp-card .sp-title{font-weight:600;color:var(--text-on-dark);font-size:15px;margin-bottom:4px}
+.sp-card .sp-desc{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.5}
+
+/* ===== Search button (floating) ===== */
+.search-fab{
+  position:fixed;top:16px;right:16px;z-index:150;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,0.1);backdrop-filter:blur(40px) saturate(2);
+  border:1px solid rgba(255,255,255,0.15);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:rgba(255,255,255,0.6);font-size:18px;
+  transition:all 0.3s var(--ease);
+}
+.search-fab:hover{background:rgba(255,255,255,0.15);color:#fff;transform:scale(1.1)}
+.search-fab .kbd{
+  position:absolute;top:-8px;right:-8px;
+  font-size:9px;padding:2px 5px;border-radius:4px;
+  background:var(--cta);color:#fff;font-weight:600;
+}
+
+/* ===== Animations ===== */
+.fade-in{animation:fadeUp var(--dur) var(--ease) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.stagger-1{animation-delay:0.05s}.stagger-2{animation-delay:0.1s}.stagger-3{animation-delay:0.15s}
+.stagger-4{animation-delay:0.2s}.stagger-5{animation-delay:0.25s}.stagger-6{animation-delay:0.3s}
+.stagger-7{animation-delay:0.35s}.stagger-8{animation-delay:0.4s}
+
+.search-hidden{display:none!important}
+
+/* ===== Mobile ===== */
+/* ===== Mobile Bottom Tab Bar (replaces dock on mobile) ===== */
+.mobile-tabbar{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));
+  background:rgba(20,20,22,0.85);
+  backdrop-filter:blur(40px) saturate(2);
+  -webkit-backdrop-filter:blur(40px) saturate(2);
+  border-top:1px solid rgba(255,255,255,0.08);
+}
+.mobile-tabbar-items{display:flex;justify-content:space-around;align-items:center}
+.mtb-item{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 2px;border:none;background:transparent;
+  cursor:pointer;color:rgba(255,255,255,0.35);
+  font-size:9px;font-weight:500;font-family:var(--font);
+  transition:color 0.2s;
+}
+.mtb-item.active{color:var(--link-dark)}
+.mtb-item .mtb-icon{font-size:20px}
+.mtb-more-sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:250;
+  background:rgba(20,20,22,0.95);
+  backdrop-filter:blur(40px) saturate(2);
+  border-top:1px solid rgba(255,255,255,0.1);
+  border-radius:24px 24px 0 0;
+  padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));
+  animation:slideUp 0.3s var(--ease);
+}
+.mtb-more-overlay{
+  position:fixed;inset:0;z-index:240;background:rgba(0,0,0,0.5);
+}
+.mtb-more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.mtb-more-item{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:12px 4px;border-radius:14px;border:none;background:transparent;
+  cursor:pointer;color:rgba(255,255,255,0.6);font-size:11px;
+  transition:background 0.2s;
+}
+.mtb-more-item:hover,.mtb-more-item:active{background:rgba(255,255,255,0.08);color:#fff}
+.mtb-more-item .mtb-icon{font-size:26px}
+.mtb-more-title{font-size:14px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:12px}
+
+/* ===== Mobile Search Bar ===== */
+.mobile-search{
+  display:none;
+  position:sticky;top:0;z-index:150;
+  padding:8px 12px;
+  background:rgba(10,10,12,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.mobile-search-btn{
+  width:100%;height:38px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;color:rgba(255,255,255,0.4);font-size:14px;
+  cursor:pointer;font-family:var(--font);
+}
+
+/* ===== Table wrapper for mobile scroll ===== */
+.glass-card,.tab-content,.hl{position:relative}
+table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+th,td{white-space:nowrap}
+/* On desktop, revert to normal table layout */
+@media(min-width:769px){
+  table{display:table;white-space:normal;overflow:visible}
+  th,td{white-space:normal}
+}
+
+@media(max-width:768px){
+  .hero-title{font-size:36px;line-height:40px;letter-spacing:-1px}
+  .hero-sub{font-size:15px;line-height:22px}
+  .hero-badge{font-size:11px;padding:4px 12px}
+  .orb{width:80px;height:80px;border-radius:50%}
+  .orb .orb-num{font-size:16px}
+  .orb .orb-lbl{font-size:10px}
+  .hero-orb{gap:10px}
+  .hero-content{padding:40px 16px}
+  .hero-slide{min-height:auto;padding:60px 16px 40px}
+  .scroll-hint{display:none}
+
+  .slide{min-height:auto !important;padding:32px 14px 90px}
+  .slide-content{max-width:100%}
+  .slide-title{font-size:26px;line-height:30px;letter-spacing:-0.5px}
+  .slide-subtitle{font-size:14px;margin-bottom:20px}
+  .slide-tag{font-size:11px;padding:3px 10px}
+
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr !important;gap:12px}
+  .sp-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .sp-card{padding:16px 14px}
+  .sp-card .sp-icon{font-size:24px}
+  .sp-card .sp-title{font-size:14px}
+  .sp-card .sp-desc{font-size:12px}
+
+  .persona-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .persona-card{padding:14px 8px}
+  .persona-card .emoji{font-size:22px}
+  .persona-card .role{font-size:12px}
+  .persona-card .scene{font-size:10px}
+
+  .scene-grid{grid-template-columns:1fr;gap:12px}
+  .scene-card img{height:120px}
+
+  .stat-card{min-width:100%;padding:16px}
+  .stat-card .sc-val{font-size:28px}
+  .stat-row{flex-direction:row;flex-wrap:wrap}
+  .stat-row .stat-card{flex:1 1 40%;min-width:140px}
+
+  .glass-card{padding:18px 16px;border-radius:16px}
+
+  /* Hide desktop dock, show mobile tabbar */
+  .dock{display:none !important}
+  .mobile-tabbar{display:block}
+  .mobile-search{display:block}
+  .search-fab{display:none}
+
+  /* Bigger touch targets for accordion */
+  .acc-header{padding:16px 14px;min-height:52px}
+  .acc-body-inner{padding:2px 14px 14px 50px;font-size:13px}
+  .acc-icon{width:28px;height:28px}
+
+  /* Tabs scrollable on mobile */
+  .tabs{width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+
+  .spec-bar .name{width:64px;font-size:12px}
+  .spec-bar .fill{font-size:10px}
+
+  .compare-row{grid-template-columns:64px 1fr auto;font-size:11px;gap:8px}
+  .compare-row .cname{font-size:11px}
+  .compare-row .cval{font-size:10px}
+
+  .cmd-box{width:calc(100% - 24px);max-width:none;margin:0 12px}
+  .cmd-input{font-size:16px;padding:16px 16px 16px 48px}
+  .cmd-item{padding:14px 14px;min-height:48px}
+
+  .chart-box{padding:10px}
+  .chart-box canvas{max-height:200px !important}
+
+  table{font-size:12px}
+  th,td{padding:6px 8px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ==================== Data ====================
+const DOCK_ITEMS = [
+  { id: "hero", icon: "🏠", label: "首页" },
+  { id: "specs", icon: "📊", label: "参数" },
+  { id: "price", icon: "💰", label: "价格" },
+  { id: "points", icon: "⭐", label: "卖点" },
+  { id: "scenes", icon: "🌐", label: "功能" },
+  { id: "ai", icon: "🤖", label: "AI" },
+  { id: "pay", icon: "💳", label: "支付" },
+  { id: "compare", icon: "⚔️", label: "竞品" },
+  { id: "faq", icon: "❓", label: "FAQ" },
+  { id: "objection", icon: "💬", label: "异议" },
+  { id: "users", icon: "👥", label: "用户" },
+  { id: "service", icon: "🔧", label: "服务" },
+];
+
+const CMD_ITEMS = [
+  { cat: "产品", icon: "📊", title: "参数可视化", id: "specs" },
+  { cat: "产品", icon: "💰", title: "价格与版本", id: "price" },
+  { cat: "产品", icon: "⭐", title: "核心卖点", id: "points" },
+  { cat: "功能", icon: "🌐", title: "功能全景", id: "scenes" },
+  { cat: "功能", icon: "🌍", title: "实时翻译", id: "translate" },
+  { cat: "功能", icon: "🤖", title: "AI 助手", id: "ai" },
+  { cat: "功能", icon: "💳", title: "支付体验", id: "pay" },
+  { cat: "销售", icon: "❓", title: "常见问题", id: "faq" },
+  { cat: "销售", icon: "⚔️", title: "竞品对比", id: "compare" },
+  { cat: "销售", icon: "💬", title: "异议处理", id: "objection" },
+  { cat: "销售", icon: "👥", title: "目标用户", id: "users" },
+  { cat: "服务", icon: "🔌", title: "配件生态", id: "accessories" },
+  { cat: "服务", icon: "🏬", title: "渠道与售后", id: "channels" },
+  { cat: "服务", icon: "💻", title: "YodaOS 系统", id: "yodaos" },
+];
+
+const SPEC_BARS = [
+  { name:"轻量化",w:"85%",text:"49g · 行业领先",color:"green" },
+  { name:"亮度",w:"95%",text:"1500 nits",color:"blue" },
+  { name:"摄像头",w:"80%",text:"1200万 IMX681",color:"purple" },
+  { name:"续航",w:"45%",text:"轻度2-3h",color:"orange" },
+  { name:"快充",w:"90%",text:"10min→90%",color:"teal" },
+  { name:"翻译",w:"95%",text:"89种语言",color:"green" },
+  { name:"AI模型",w:"75%",text:"5个大模型",color:"purple" },
+  { name:"智能体",w:"88%",text:"440+",color:"blue" },
+];
+
+const SPEC_CARDS = [
+  {val:"49g",lbl:"重量"},{val:"640×480",lbl:"分辨率"},
+  {val:"1500nits",lbl:"亮度"},{val:"30°",lbl:"视场角"},
+  {val:"2+32GB",lbl:"内存/存储"},{val:"210mAh",lbl:"电池"},
+  {val:"WiFi 6",lbl:"连接"},{val:"蓝牙5.3",lbl:"连接"},
+];
+
+const DETAIL_PARAMS = [
+  {p:"显示技术",v:"双目衍射光波导 + Micro-LED",tag:"official"},
+  {p:"显示色彩",v:"单色绿光",tag:"media"},
+  {p:"分辨率",v:"640 × 480",tag:"official"},
+  {p:"亮度",v:"1500 nits（峰值）",tag:"official"},
+  {p:"FOV",v:"约 30°",tag:"official"},
+  {p:"处理器",v:"高通骁龙 AR1 Gen1",tag:"official"},
+  {p:"内存/存储",v:"2GB RAM + 32GB ROM",tag:"official"},
+  {p:"电池",v:"210mAh",tag:"official"},
+  {p:"摄像头",v:"1200万 索尼IMX681 F2.25 109°",tag:"official"},
+  {p:"充电",v:"磁吸式 10min→90% 20min充满",tag:"official"},
+  {p:"防护",v:"IPX4",tag:"official"},
+  {p:"隐私",v:"硬件指示灯（强制亮+防遮挡）",tag:"official"},
+];
+
+const SELLING_POINTS = [
+  {icon:"📺",title:"有屏幕 — AR 光波导",desc:"翻译字幕、导航箭头、提词文字悬浮在视野中。华为/小米眼镜均无屏幕。"},
+  {icon:"🤖",title:"5 大 AI 模型",desc:"通义千问/DeepSeek/豆包/智谱清言/纳米搜索，自动路由最优模型。"},
+  {icon:"💳",title:"支付宝 + 微信",desc:"支付宝已上线，微信即将上线。看向收款码→语音确认→付款。"},
+  {icon:"🌍",title:"89 种语言翻译",desc:"延迟 200ms，字幕直接显示在镜片。离线 6 种语言。"},
+  {icon:"📱",title:"本土生态",desc:"高德导航、京东购物、支付宝、微信——国内最好生态。"},
+  {icon:"🔋",title:"快充 + 充电盒",desc:"10min→90%，充电盒补电10+次，全天不断电。"},
+  {icon:"🔒",title:"隐私保护",desc:"硬件指示灯强制亮+防遮挡。数据全链路加密。"},
+  {icon:"🧩",title:"440+ 智能体",desc:"3.5万开发者持续产出。越用越强大。"},
+];
+
+const AI_MODELS = [
+  {name:"通义千问",desc:"阿里，中文强",scene:"日常/购物"},
+  {name:"DeepSeek",desc:"深度推理",scene:"逻辑分析"},
+  {name:"豆包",desc:"字节出品",scene:"内容创作"},
+  {name:"智谱清言",desc:"清华GLM",scene:"学术专业"},
+  {name:"纳米搜索",desc:"检索增强",scene:"实时搜索"},
+];
+
+const FAQ_ITEMS = [
+  {q:"多少钱？",a:"官方零售价 ¥3,299（标准版含 AR 显示）。京东/天猫/抖音旗舰店有售。大促可能优惠。"},
+  {q:"之前不是说 ¥2,499 吗？",a:"¥2,499 是 2024.11 发布会预售价。2025 Q2 正式发售后调整为 ¥3,299。"},
+  {q:"近视能戴吗？",a:"可以。磁吸镜框支持近视/散光定制，购机常赠送「0元磁吸配镜服务」。合作门店：毛源昌等。单独配镜 ¥200–400。"},
+  {q:"续航多久？",a:"官方标称音乐播放5-6h、通话4h。实测轻度2-3h，AI重度不足2h。210mAh电池。快充10min→90%。充电盒（¥399另购）补电10+次。"},
+  {q:"录像时别人知道吗？",a:"知道。硬件指示灯强制亮起，有防遮挡机制。数据全链路加密。"},
+  {q:"充电盒是标配吗？",a:"不是。标准包装含普通收纳盒。充电眼镜盒（3000mAh ¥399）需单独购买。建议搭配。"},
+  {q:"防水吗？",a:"IPX4 防泼水。不可浸泡/冲洗/水蒸气。进水不保修。"},
+  {q:"可以戴着开车吗？",a:"强烈不建议。可能分散注意力，存在安全隐患。"},
+  {q:"屏幕什么颜色？能看视频吗？",a:"单色绿光 640×480。用于翻译/导航/提词等信息显示，不适合看视频。是 AI 信息辅助眼镜，非观影眼镜。"},
+  {q:"支持哪些 AI 大模型？",a:"中国版：通义千问、DeepSeek、豆包、智谱清言、纳米搜索。不支持 Gemini/ChatGPT（中国大陆网络限制）。"},
+  {q:"微信支付能用吗？",a:"支付宝已于 2025.6 上线。微信扫一扫 2026.6.26 发布，正在推送，即将全面上线。"},
+  {q:"需要一直连手机吗？",a:"核心 AI/联网功能需要手机 App「Rokid AI」配合。不能完全独立使用。"},
+  {q:"保修退换政策？",a:"12个月质保。7天质量问题退/15天换（三包）。30天可退（需原状态完整）。另有 RokidCare 碎屏保障。"},
+  {q:"和影目GO3区别？",a:"影目GO3是直接竞品——同是单绿显示+摄像头+AI+支付宝。但乐奇有三个优势：①更轻49g vs 53g；②AI模型5个 vs 3个；③骁龙AR1 vs 展锐W337。影目优势是可换电续航。"},
+  {q:"和华为/小米区别？",a:"华为/小米没有AR显示屏，是\"耳机+相机\"组合，不同品类。乐奇有光波导AR屏——翻译字幕、导航箭头看得见。带屏AI眼镜里，这个价位只有乐奇和影目GO3。"},
+  {q:"和雷鸟区别？",a:"雷鸟主打AR观影（全彩大屏），适合看视频。乐奇主打AI日常辅助（翻译/导航/支付/拍照）。定位不同。雷鸟iO（Q3预告）是单绿显示，但传闻无摄像头。"},
+  {q:"BOLON 和乐奇什么关系？",a:"战略合作产品。暴龙设计外观，Rokid 提供 AI 算法。BOLON 无 AR 屏但更轻 38.5g，¥2,199 起。适合不需要屏幕、追求轻便的客户。"},
+];
+
+const OBJECTION_ITEMS = [
+  {q:"\"太贵了\"",a:"\"¥3,299 买的是有 AR 屏的 AI 电脑。带屏的眼镜里：影目GO3 ¥2,999便宜但更重53g、AI模型只有3个；StarV Air2 ¥1,699但无摄像头无支付；全彩的影目AIR3 ¥4,999但135g太重。乐奇是带屏+摄像头+支付+5个大模型里最均衡的。\""},
+  {q:"\"续航太短\"",a:"\"49g 轻量化决定了 210mAh 电池。解法是快充+充电盒：10min→90%，充电盒（¥399）补10+次。轻度2-3h覆盖大部分场景。官方标称音乐5-6h。\""},
+  {q:"\"屏幕只有绿色\"",a:"\"有意设计：①低功耗保续航；②阳光下最清晰(1500nits)，全彩户外反而看不清；③定位是信息辅助——翻译/导航/提词，不需要看视频。未来有全彩版，现阶段是最佳平衡。\""},
+  {q:"\"怕隐私问题\"",a:"\"硬件级保护：指示灯强制亮+防遮挡，想偷拍都拍不了。数据全链路加密。比手机拍照还透明。\""},
+  {q:"\"华为也有AI眼镜，还更轻\"",a:"\"华为/小米没有AR显示屏，是不同品类——'耳机+相机'组合。乐奇有光波导AR屏，翻译字幕、导航箭头、提词文字看得见。如果要带屏的AI眼镜，这个价位只有乐奇和影目GO3。\""},
+  {q:"\"小米才¥1,999\"",a:"\"小米便宜但没有AR显示屏。乐奇¥3,299多出¥1,300换来一块光波导AR屏+5个大模型+支付宝+高德导航。完全是两种产品。\""},
+  {q:"\"没听过这个品牌\"",a:"\"Rokid 成立10年专注 AR/AI。2025年销量30万台，Q1市占21%行业第一。投资方含蓝思科技、康耐特光学。默茨和马克龙都亲自试戴过。行业头部品牌。\""},
+  {q:"\"发布会不是说 ¥2,499？\"",a:"\"¥2,499 是 2024.11 发布会早期预售价。2025 Q2 量产后因光波导+Micro-LED 成本，调整为 ¥3,299。同配置产品中仍是最有竞争力的——有屏+摄像头+支付宝，只此一家。\""},
+];
+
+const COMPARE_TABLE = [
+  {name:"乐奇 Glasses",price:"¥3,299",weight:"49g",display:"✅ 单绿光波导 1500nits",camera:"✅ 1200万",ai:"5个国内模型",pay:"✅ 支付宝",battery:"≈4h+充电盒",highlight:true},
+  {name:"千问S1",price:"¥3,499",weight:"未公布",display:"✅ 全彩Micro-LED 4000nits",camera:"✅ 1200万",ai:"通义千问",pay:"✅ 支付宝",battery:"双电池热插拔"},
+  {name:"影目GO3",price:"¥2,999",weight:"53g",display:"✅ 单绿光波导",camera:"✅ 有",ai:"智谱GLM+ChatGPT",pay:"✅ 支付宝",battery:"可换电\"无限续航\""},
+  {name:"魅族StarV Air2",price:"~¥1,699",weight:"44g",display:"✅ 单绿Micro-LED",camera:"❌ 无",ai:"Flyme AI",pay:"❌ 无",battery:"204mAh"},
+  {name:"影目AIR3",price:"¥4,999",weight:"135g",display:"✅ 全彩1080P",camera:"✅ 1600万",ai:"ChatGPT+国产",pay:"不明确",battery:"1.5-2h"},
+  {name:"雷鸟X3 Pro",price:"¥8,999",weight:"76g",display:"✅ 全彩Micro-LED 6000nits",camera:"✅ 双摄4K",ai:"通义千问",pay:"不明确",battery:"~1h拍摄"},
+  {name:"XREAL One Pro",price:"¥4,299",weight:"87g",display:"✅ 全彩OLED 57°FOV",camera:"❌ 需外接¥599",ai:"依赖外接设备",pay:"❌ 无",battery:"无内置电池"},
+];
+
+const COMPARE_WEIGHTS = [
+  {name:"StarV Air2",w:"33%",val:"44g · 无摄像头",color:"var(--teal)"},
+  {name:"乐奇",w:"36%",val:"49g · 有屏+摄像头",color:"var(--cta)"},
+  {name:"千问S1",w:"42%",val:"有屏+摄像头 · ¥3,499",color:"var(--purple)"},
+  {name:"影目GO3",w:"39%",val:"53g · 有屏+摄像头",color:"var(--orange)"},
+  {name:"雷鸟X3 Pro",w:"56%",val:"76g · 全彩¥8,999",color:"var(--orange)"},
+  {name:"XREAL One Pro",w:"64%",val:"87g · 分体式无电池",color:"var(--orange)"},
+  {name:"影目AIR3",w:"100%",val:"135g · 全彩AR头显",color:"var(--orange)"},
+];
+
+const THREAT_TIERS = [
+  {tier:"Tier 1",tierColor:"var(--red)",product:"影目GO3 ¥2,999",reason:"同形态直接竞品。影目市占率37.8%领先，换电续航是杀手锏。乐奇优势：更轻49g、AI模型5个vs3个、骁龙AR1。"},
+  {tier:"Tier 1",tierColor:"var(--red)",product:"千问S1 ¥3,499",reason:"阿里旗下，京东618第2。有全彩Micro-LED 4000nits+通义千问+支付宝+热插拔双电池。比乐奇贵¥200但全彩+阿里生态是杀手锏。"},
+  {tier:"Tier 2",tierColor:"var(--orange)",product:"千问G1 ¥2,899",reason:"无屏不是直接竞品，但性价比极高+阿里生态。话术：千问G1没屏幕，乐奇有AR屏看得见。"},
+  {tier:"Tier 2",tierColor:"var(--orange)",product:"雷鸟iO（Q3预告）",reason:"单绿显示+轻量化定位相似。但传闻无摄像头。"},
+  {tier:"Tier 3",tierColor:"var(--gray)",product:"StarV Air2 ¥1,699",reason:"更轻但无摄像头无支付，已并入雷鸟。"},
+  {tier:"Tier 3",tierColor:"var(--gray)",product:"影目AIR3 ¥4,999",reason:"全彩但135g太重，续航仅1.5-2h。"},
+  {tier:"Tier 3",tierColor:"var(--gray)",product:"雷鸟X3 Pro ¥8,999",reason:"价格2.7倍，完全不同价格带。"},
+  {tier:"Tier 3",tierColor:"var(--gray)",product:"XREAL One Pro ¥4,299",reason:"分体式观影AR，无内置电池无摄像头。"},
+];
+
+const RANKING_618 = [
+  {rank:"#1",product:"乐奇（Rokid）AI眼镜",type:"AR显示",note:"98%好评率",highlight:true},
+  {rank:"#2",product:"千问AI显示眼镜 S1",type:"AR显示",note:"全彩Micro-LED"},
+  {rank:"#3",product:"华为AI眼镜（钛银灰）",type:"AI拍照",note:"无屏"},
+  {rank:"#5",product:"千问AI眼镜 G1（半框款）",type:"AI拍照",note:"无屏·到手¥1,997"},
+  {rank:"#8",product:"华为智能眼镜2（钛空眉架）",type:"音频",note:"无屏无摄像头"},
+  {rank:"#9-10",product:"千问/夸克 S1（其他配置）",type:"AR显示",note:"千问共4款入围前十"},
+];
+
+const PERSONAS = [
+  {emoji:"💼",role:"职场精英",scene:"会议转译·演讲提词"},
+  {emoji:"✈️",role:"商务差旅",scene:"多语言翻译·导航"},
+  {emoji:"🔬",role:"科技爱好者",scene:"AI穿戴·智能体"},
+  {emoji:"🚴",role:"骑行/户外",scene:"头显导航·拍摄"},
+  {emoji:"🎓",role:"学生",scene:"AI问答·识别"},
+  {emoji:"📹",role:"内容创作者",scene:"第一视角Vlog"},
+];
+
+const ACCESSORIES = [
+  {name:"充电眼镜盒 3000mAh",price:"¥399",note:"补电10+次"},
+  {name:"充电胶囊 1800mAh",price:"~¥299",note:"磁吸外挂"},
+  {name:"磁吸近视镜片",price:"¥0–400",note:"购机常赠"},
+  {name:"偏光夹片",price:"¥50–60",note:"户外防眩光"},
+  {name:"蓝牙戒指",price:"¥199–299",note:"远程拍照"},
+];
+
+// ==================== Hooks ====================
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
+function useScrollSpy(ids) {
+  const [activeId, setActiveId] = useState(ids[0]);
+  useEffect(() => {
+    const handler = () => {
+      const y = window.scrollY + 100;
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= y) current = id;
+      }
+      setActiveId(current);
+    };
+    window.addEventListener('scroll', handler, { passive: true });
+    handler();
+    return () => window.removeEventListener('scroll', handler);
+  }, [ids.join(',')]);
+  return activeId;
+}
+
+// ==================== Components ====================
+const MOBILE_TABS = [
+  { id: "hero", icon: "🏠", label: "首页" },
+  { id: "specs", icon: "📊", label: "参数" },
+  { id: "compare", icon: "⚔️", label: "竞品" },
+  { id: "faq", icon: "❓", label: "FAQ" },
+  { id: "__more__", icon: "•••", label: "更多" },
+];
+
+const MORE_ITEMS = [
+  { id: "price", icon: "💰", label: "价格" },
+  { id: "points", icon: "⭐", label: "卖点" },
+  { id: "scenes", icon: "🌐", label: "功能" },
+  { id: "ai", icon: "🤖", label: "AI" },
+  { id: "pay", icon: "💳", label: "支付" },
+  { id: "objection", icon: "💬", label: "异议" },
+  { id: "users", icon: "👥", label: "用户" },
+  { id: "service", icon: "🔧", label: "服务" },
+];
+
+function Dock({ activeId, onNav }) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <>
+        <div className="mobile-tabbar">
+          <div className="mobile-tabbar-items">
+            {MOBILE_TABS.map(item => (
+              <button key={item.id}
+                className={`mtb-item ${activeId === item.id ? 'active' : ''}`}
+                onClick={() => item.id === '__more__' ? setMoreOpen(true) : onNav(item.id)}
+              >
+                <span className="mtb-icon">{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {moreOpen && (
+          <>
+            <div className="mtb-more-overlay" onClick={() => setMoreOpen(false)} />
+            <div className="mtb-more-sheet">
+              <div className="mtb-more-title">全部功能</div>
+              <div className="mtb-more-grid">
+                {MORE_ITEMS.map(item => (
+                  <button key={item.id} className="mtb-more-item"
+                    onClick={() => { onNav(item.id); setMoreOpen(false); }}
+                  >
+                    <span className="mtb-icon">{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className="dock">
+      {DOCK_ITEMS.map(item => (
+        <button key={item.id} className={`dock-item ${activeId === item.id ? 'active' : ''}`} onClick={() => onNav(item.id)}>
+          {item.icon}
+          <span className="label">{item.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function CommandPalette({ open, onClose, onNavigate }) {
+  const [query, setQuery] = useState('');
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      setQuery('');
+      setSelectedIdx(0);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIdx(i => Math.min(i+1, filtered.length-1)); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIdx(i => Math.max(i-1, 0)); }
+      if (e.key === 'Enter' && filtered[selectedIdx]) { onNavigate(filtered[selectedIdx].id); onClose(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, query, selectedIdx]);
+
+  const filtered = query
+    ? CMD_ITEMS.filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
+    : CMD_ITEMS;
+
+  if (!open) return null;
+  return (
+    <div className="cmd-overlay" onClick={onClose}>
+      <div className="cmd-box" onClick={e => e.stopPropagation()}>
+        <div style={{position:'relative'}}>
+          <span className="cmd-icon">🔍</span>
+          <input ref={inputRef} className="cmd-input" value={query} onChange={e => {setQuery(e.target.value);setSelectedIdx(0)}} placeholder="搜索功能、参数、话术..." />
+        </div>
+        <div className="cmd-list">
+          {filtered.length === 0 && <div style={{padding:'20px',textAlign:'center',color:'rgba(255,255,255,0.3)',fontSize:'14px'}}>没有匹配结果</div>}
+          {filtered.map((item, i) => (
+            <div key={i} className={`cmd-item ${i === selectedIdx ? 'selected' : ''}`} onClick={() => { onNavigate(item.id); onClose(); }}>
+              <span className="ci-icon">{item.icon}</span>
+              <span className="ci-title">{item.title}</span>
+              <span className="ci-cat">{item.cat}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SpecBar({ bar, animate }) {
+  return (
+    <div className="spec-bar">
+      <span className="name">{bar.name}</span>
+      <div className="track"><div className={`fill ${bar.color}`} style={{width: animate ? bar.w : '0'}}>{bar.text}</div></div>
+    </div>
+  );
+}
+
+function Tabs({ tabs, active, onChange }) {
+  return (
+    <div className="tabs">
+      {tabs.map(t => <button key={t.id} className={`tab ${active === t.id ? 'active' : ''}`} onClick={() => onChange(t.id)}>{t.label}</button>)}
+    </div>
+  );
+}
+
+function Accordion({ items, iconType, search }) {
+  const [openIdx, setOpenIdx] = useState(null);
+  const filtered = search ? items.map((it,i) => ({...it,i})).filter(it => (it.q+it.a).toLowerCase().includes(search.toLowerCase())) : items.map((it,i) => ({...it,i}));
+  useEffect(() => { if (search && filtered.length > 0) setOpenIdx(filtered[0].i); }, [search]);
+  if (!filtered.length) return <p style={{color:'rgba(255,255,255,0.3)',padding:'16px'}}>没有匹配的问题</p>;
+  return <div>{filtered.map(item => (
+    <div key={item.i} className={`acc-item ${openIdx === item.i ? 'open' : ''}`}>
+      <div className="acc-header" onClick={() => setOpenIdx(openIdx === item.i ? null : item.i)}>
+        <span className={`acc-icon ${iconType === 'warn' ? 'warn' : ''}`}>{iconType === 'warn' ? '!' : 'Q'}</span>
+        {item.q}<span className="acc-arrow">▶</span>
+      </div>
+      <div className="acc-body"><div className="acc-body-inner">{item.a}</div></div>
+    </div>
+  ))}</div>;
+}
+
+// ===== Slide Sections =====
+function HeroSlide() {
+  return (
+    <div className="slide hero-slide" id="hero" data-search>
+      <div className="hero-content">
+        <div className="hero-badge">✦ 京东618 AI眼镜销量榜 #1</div>
+        <div className="hero-title">乐奇 AI 眼镜<br/><span className="grad">看见未来</span></div>
+        <div className="hero-sub">中国市场唯一同时具备 AR 显示 + 多 AI 大模型 + 支付宝支付 + 高德/京东整合的智能眼镜</div>
+        <div className="hero-orb">
+          <div className="orb"><span className="orb-num">¥3,299</span><span className="orb-lbl">官方零售价</span></div>
+          <div className="orb"><span className="orb-num">49g</span><span className="orb-lbl">整机重量</span></div>
+          <div className="orb"><span className="orb-num">30万+</span><span className="orb-lbl">累计销量</span></div>
+          <div className="orb"><span className="orb-num">#1</span><span className="orb-lbl">Q1市占率</span></div>
+        </div>
+      </div>
+      <div className="scroll-hint">向下滚动探索<span className="arrow">↓</span></div>
+    </div>
+  );
+}
+
+function SpecsSlide({ animate }) {
+  const [tab, setTab] = useState('bars');
+  const radarRef = useRef(null);
+  useEffect(() => {
+    if (tab === 'radar' && radarRef.current) {
+      const chart = new Chart(radarRef.current.getContext('2d'), {
+        type:'radar',
+        data:{labels:['显示','摄像头','AI模型','支付','导航','轻量化'],datasets:[
+          {label:'乐奇',data:[5,5,5,5,5,4],borderColor:'#0071E3',backgroundColor:'rgba(0,113,227,.1)',pointBackgroundColor:'#0071E3',borderWidth:2},
+          {label:'影目GO3',data:[5,4,3,4,0,3],borderColor:'#FF8D28',backgroundColor:'rgba(255,141,40,.08)',pointBackgroundColor:'#FF8D28',borderWidth:2},
+          {label:'StarV Air2',data:[4,0,2,0,0,5],borderColor:'#00C3D0',backgroundColor:'rgba(0,195,208,.08)',pointBackgroundColor:'#00C3D0',borderWidth:2}
+        ]},
+        options:{responsive:true,scales:{r:{beginAtZero:true,max:5,ticks:{stepSize:1,backdropColor:'transparent',color:'rgba(255,255,255,0.3)'},grid:{color:'rgba(255,255,255,0.06)'},angleLines:{color:'rgba(255,255,255,0.06)'},pointLabels:{color:'rgba(255,255,255,0.6)',font:{size:13}}}},plugins:{legend:{labels:{color:'rgba(255,255,255,0.6)',font:{size:12}}}}}
+      });
+      return () => chart.destroy();
+    }
+  }, [tab]);
+  return (
+    <div className="slide section-slide" id="specs" data-search>
+      <div className="slide-content">
+        <div className="slide-tag blue">参数</div>
+        <div className="slide-title">硬核参数，一目了然</div>
+        <div className="slide-subtitle">49g 塞入完整 AR 系统</div>
+        <Tabs tabs={[{id:'bars',label:'进度条'},{id:'radar',label:'雷达图'},{id:'detail',label:'参数表'}]} active={tab} onChange={setTab} />
+        {tab === 'bars' && <div className="tab-content">
+          <div className="spec-bars">{SPEC_BARS.map((b,i) => <SpecBar key={i} bar={b} animate={animate} />)}</div>
+          <div className="grid-4" style={{marginTop:'16px'}}>
+            {SPEC_CARDS.map((c,i) => <div key={i} className="glass-card" style={{padding:'16px',textAlign:'center'}}><div style={{fontSize:'22px',fontWeight:700,color:'var(--link-dark)'}}>{c.val}</div><div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)',marginTop:'2px'}}>{c.lbl}</div></div>)}
+          </div>
+        </div>}
+        {tab === 'radar' && <div className="tab-content"><div className="chart-box"><canvas ref={radarRef}></canvas></div></div>}
+        {tab === 'detail' && <div className="tab-content"><table><tbody>
+          <tr><th>参数</th><th>规格</th><th>来源</th></tr>
+          {DETAIL_PARAMS.map((r,i) => <tr key={i}><td>{r.p}</td><td>{r.v}</td><td><span className={`tag ${r.tag}`}>{r.tag==='official'?'官方':'评测'}</span></td></tr>)}
+        </tbody></table>
+        <div className="hl red"><strong>⚠️</strong> IPX4 仅防泼水，不可浸泡/冲洗/水蒸气。进水不保修。</div></div>}
+      </div>
+    </div>
+  );
+}
+
+function PriceSlide() {
+  const [tab, setTab] = useState('main');
+  return (
+    <div className="slide section-slide light" id="price" data-search>
+      <div className="slide-content">
+        <div className="slide-tag green">价格</div>
+        <div className="slide-title">¥3,299 起</div>
+        <div className="slide-subtitle">带屏 AI 眼镜三强中最便宜</div>
+        <Tabs tabs={[{id:'main',label:'乐奇标准版'},{id:'bolon',label:'BOLON 联名'},{id:'acc',label:'配件'}]} active={tab} onChange={setTab} />
+        {tab === 'main' && <div className="tab-content">
+          <div className="stat-row">
+            <div className="stat-card"><div className="sc-val">¥3,299</div><div className="sc-lbl">官方零售价</div></div>
+            <div className="stat-card"><div className="sc-val">¥2,499</div><div className="sc-lbl">早期预售（已调整）</div></div>
+          </div>
+          <div className="hl red"><strong>价格说明：</strong>发布会预售价 ¥2,499（2024.11），2025 Q2 调整为 ¥3,299。如客户问 ¥2,499，说明是早期发布会公布价。</div>
+        </div>}
+        {tab === 'bolon' && <div className="tab-content">
+          <div className="hl orange"><strong>BOLON AI</strong> = Rokid × 暴龙战略合作。暴龙设计外观，Rokid 提供 AI 算法。无 AR 屏，更轻 38.5g。</div>
+          <table><tbody><tr><th>版本</th><th>价格</th></tr><tr><td>太阳镜/光学镜款</td><td>¥2,199</td></tr><tr><td>全视线变色款</td><td>¥2,599</td></tr></tbody></table>
+        </div>}
+        {tab === 'acc' && <div className="tab-content">
+          <div className="hl red"><strong>重要：</strong>标准包装<strong>不含充电盒</strong>，需另购。</div>
+          <table><tbody><tr><th>配件</th><th>价格</th><th>说明</th></tr>{ACCESSORIES.map((a,i)=><tr key={i}><td>{a.name}</td><td>{a.price}</td><td>{a.note}</td></tr>)}</tbody></table>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function PointsSlide() {
+  return (
+    <div className="slide section-slide" id="points" data-search>
+      <div className="slide-content">
+        <div className="slide-tag purple">卖点</div>
+        <div className="slide-title">8 大核心卖点</div>
+        <div className="slide-subtitle">华为/小米没有的，乐奇都有</div>
+        <div className="sp-grid">
+          {SELLING_POINTS.map((sp,i) => (
+            <div key={i} className={`sp-card fade-in stagger-${(i%8)+1}`}>
+              <div className="sp-icon">{sp.icon}</div>
+              <div className="sp-title">{sp.title}</div>
+              <div className="sp-desc">{sp.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScenesSlide() {
+  return (
+    <div className="slide section-slide alt" id="scenes" data-search>
+      <div className="slide-content">
+        <div className="slide-tag blue">功能</div>
+        <div className="slide-title">功能全景</div>
+        <div className="slide-subtitle">49g 塞入完整 AR 系统</div>
+        <div className="scene-grid">
+          <div className="scene-card"><img src="listenhub-20260704-112503-zyzgd4.png" alt="翻译"/><div className="sc-body"><div className="sc-title">🌐 实时翻译</div><div className="sc-desc">89种语言，字幕悬浮镜片，延迟200ms。出国旅行/商务会谈利器。</div></div></div>
+          <div className="scene-card"><img src="listenhub-20260704-112605-koly03.png" alt="AI"/><div className="sc-body"><div className="sc-title">🤖 AI 多模型</div><div className="sc-desc">5大模型智能路由，不绑定单一生态。手动可选偏好。</div></div></div>
+          <div className="scene-card"><img src="listenhub-20260704-112332-8z0l39.png" alt="硬件"/><div className="sc-body"><div className="sc-title">🔧 硬件架构</div><div className="sc-desc">光波导+Micro-LED+骁龙AR1+索尼IMX681，49g塞入完整AR系统。</div></div></div>
+        </div>
+        <div id="translate" data-search style={{marginTop:'24px'}}>
+          <div className="slide-tag green" style={{marginTop:'16px'}}>翻译</div>
+          <div className="grid-4" style={{marginTop:'12px'}}>
+            <div className="glass-card" style={{textAlign:'center',padding:'20px'}}><div style={{fontSize:'32px',fontWeight:700,color:'var(--link-dark)'}}>89+</div><div style={{fontSize:'13px',color:'rgba(255,255,255,0.4)'}}>在线语言</div></div>
+            <div className="glass-card" style={{textAlign:'center',padding:'20px'}}><div style={{fontSize:'32px',fontWeight:700,color:'var(--green)'}}>6</div><div style={{fontSize:'13px',color:'rgba(255,255,255,0.4)'}}>离线语言</div></div>
+            <div className="glass-card" style={{textAlign:'center',padding:'20px'}}><div style={{fontSize:'32px',fontWeight:700,color:'var(--orange)'}}>200ms</div><div style={{fontSize:'13px',color:'rgba(255,255,255,0.4)'}}>翻译延迟</div></div>
+            <div className="glass-card" style={{textAlign:'center',padding:'20px'}}><div style={{fontSize:'32px',fontWeight:700,color:'var(--purple)'}}>∞</div><div style={{fontSize:'13px',color:'rgba(255,255,255,0.4)'}}>出国利器</div></div>
+          </div>
+          <div className="hl green"><strong>话术：</strong>"出国不用掏手机查翻译了，对方说话直接在眼前显示中文。89种语言连小语种都覆盖。"</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AISlide() {
+  const chartRef = useRef(null);
+  useEffect(() => {
+    if (chartRef.current) {
+      const chart = new Chart(chartRef.current.getContext('2d'), {
+        type:'doughnut',
+        data:{labels:['通义千问','DeepSeek','豆包','智谱清言','纳米搜索'],datasets:[{data:[25,22,20,18,15],backgroundColor:['#0071E3','#6155F5','#FF2D55','#34C759','#FF8D28'],borderWidth:0}]},
+        options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'rgba(255,255,255,0.6)',font:{size:12},padding:14}}}}
+      });
+      return () => chart.destroy();
+    }
+  }, []);
+  return (
+    <div className="slide section-slide" id="ai" data-search>
+      <div className="slide-content">
+        <div className="slide-tag purple">AI</div>
+        <div className="slide-title">5 大 AI 模型，智能路由</div>
+        <div className="slide-subtitle">不绑定单一生态，自动选择最优模型</div>
+        <div className="hl blue"><strong>重要：</strong>中国版仅接入<strong>国内 AI 模型</strong>，不支持 Gemini/ChatGPT。向客户介绍请勿提及。</div>
+        <div className="grid-2">
+          <div className="glass-card"><div className="chart-box" style={{background:'transparent',padding:0}}><canvas ref={chartRef} style={{maxHeight:'200px'}}></canvas></div></div>
+          <div className="glass-card">
+            <h3>模型路由策略</h3>
+            <table><tbody><tr><th>模型</th><th>场景</th></tr>{AI_MODELS.map((m,i)=><tr key={i}><td>{m.name}</td><td>{m.scene}</td></tr>)}</tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaySlide() {
+  const [tab, setTab] = useState('alipay');
+  return (
+    <div className="slide section-slide alt" id="pay" data-search>
+      <div className="slide-content">
+        <div className="slide-tag orange">支付</div>
+        <div className="slide-title">看向收款码，语音付款</div>
+        <div className="slide-subtitle">全球首个智能眼镜支付方案</div>
+        <Tabs tabs={[{id:'alipay',label:'支付宝 ✅'},{id:'wechat',label:'微信 ⚠️'}]} active={tab} onChange={setTab} />
+        {tab === 'alipay' && <div className="tab-content">
+          <p>2025.6.17 正式上线，全球首个智能眼镜支付方案。</p>
+          <div className="spec-bars">
+            <SpecBar bar={{name:"Step 1",w:"100%",text:"看向商家收钱码",color:"blue"}} animate={true} />
+            <SpecBar bar={{name:"Step 2",w:"100%",text:"语音\"乐奇，付钱XX元\"",color:"blue"}} animate={true} />
+            <SpecBar bar={{name:"Step 3",w:"100%",text:"声纹+多因子验证",color:"teal"}} animate={true} />
+            <SpecBar bar={{name:"Step 4",w:"100%",text:"自动完成付款",color:"green"}} animate={true} />
+          </div>
+          <p>已扩展至停车缴费、共享单车等场景。</p>
+        </div>}
+        {tab === 'wechat' && <div className="tab-content">
+          <div className="hl orange"><strong>状态：</strong>2026.6.26 Open Day 发布，正在陆续推送。向客户说"即将上线"。</div>
+        </div>}
+        <div className="hl blue"><strong>差异化：</strong>中国市场唯一支持支付宝的 AI 眼镜。Ray-Ban Meta 在中国无法使用任何支付。</div>
+      </div>
+    </div>
+  );
+}
+
+function CompareSlide({ animate }) {
+  const [tab, setTab] = useState('chart');
+  const chartRef = useRef(null);
+  useEffect(() => {
+    if (tab === 'chart' && chartRef.current) {
+      const chart = new Chart(chartRef.current.getContext('2d'), {
+        type:'radar',
+        data:{labels:['显示','摄像头','AI模型','支付','轻量化','续航'],datasets:[
+          {label:'乐奇',data:[5,5,5,5,4,3],borderColor:'#0071E3',backgroundColor:'rgba(0,113,227,.1)',pointBackgroundColor:'#0071E3',borderWidth:2},
+          {label:'影目GO3',data:[5,4,3,4,3,5],borderColor:'#FF8D28',backgroundColor:'rgba(255,141,40,.08)',pointBackgroundColor:'#FF8D28',borderWidth:2},
+          {label:'StarV Air2',data:[4,0,2,0,5,2],borderColor:'#00C3D0',backgroundColor:'rgba(0,195,208,.08)',pointBackgroundColor:'#00C3D0',borderWidth:2},
+          {label:'雷鸟X3 Pro',data:[6,5,3,1,2,1],borderColor:'#FF2D55',backgroundColor:'rgba(255,45,85,.08)',pointBackgroundColor:'#FF2D55',borderWidth:2}
+        ]},
+        options:{responsive:true,scales:{r:{grid:{color:'rgba(255,255,255,0.06)'},angleLines:{color:'rgba(255,255,255,0.06)'},pointLabels:{color:'rgba(255,255,255,0.6)',font:{size:12}},ticks:{color:'rgba(255,255,255,0.3)',backdropColor:'transparent',stepSize:2},min:0,max:6}},plugins:{legend:{labels:{color:'rgba(255,255,255,0.6)',font:{size:11}}}}}
+      });
+      return () => chart.destroy();
+    }
+  }, [tab]);
+  return (
+    <div className="slide section-slide" id="compare" data-search>
+      <div className="slide-content">
+        <div className="slide-tag pink">竞品</div>
+        <div className="slide-title">带屏 AI 眼镜三强争霸</div>
+        <div className="slide-subtitle">乐奇 ¥3,299 · 千问S1 ¥3,499 · 影目GO3 ¥2,999</div>
+        <div className="hl blue"><strong>筛选标准：</strong>仅包含带 AR 显示屏的 AI 眼镜。华为/小米/千问G1等无屏眼镜不在此列。</div>
+        <Tabs tabs={[{id:'chart',label:'雷达图'},{id:'table',label:'对比表'},{id:'threat',label:'威胁分级'},{id:'618',label:'618排行'}]} active={tab} onChange={setTab} />
+        {tab === 'chart' && <div className="tab-content">
+          <div className="chart-box"><canvas ref={chartRef} style={{maxHeight:'250px'}}></canvas></div>
+          {COMPARE_WEIGHTS.map((r,i) => <div key={i} className="compare-row"><span className="cname">{r.name}</span><div className="ctrack"><div className="cfill" style={{background:r.color,width:animate?r.w:'0'}}></div></div><span className="cval">{r.val}</span></div>)}
+          <div className="hl green"><strong>乐奇的位置：</strong>京东618销量榜第1。乐奇更轻、AI模型更多；千问S1全彩但更贵；影目GO3可换电续航。</div>
+        </div>}
+        {tab === 'table' && <div className="tab-content"><table><tbody>
+          <tr><th>产品</th><th>价格</th><th>重量</th><th>显示</th><th>摄像头</th><th>AI</th><th>支付</th><th>续航</th></tr>
+          {COMPARE_TABLE.map((r,i) => <tr key={i}><td style={r.highlight?{color:'var(--link-dark)',fontWeight:700}:{}}><strong>{r.name}</strong></td><td><strong>{r.price}</strong></td><td>{r.weight}</td><td>{r.display}</td><td>{r.camera}</td><td>{r.ai}</td><td>{r.pay}</td><td>{r.battery}</td></tr>)}
+        </tbody></table>
+        <div className="hl orange"><strong>千问G1（无屏款）</strong>：¥2,899（到手¥1,997），~40g，无显示，1200万摄像头，热插拔换电9h，阿里生态。京东618第5。无屏不是直接竞品但性价比极高。</div></div>}
+        {tab === 'threat' && <div className="tab-content"><table><tbody>
+          <tr><th>分级</th><th>产品</th><th>原因</th></tr>
+          {THREAT_TIERS.map((t,i) => <tr key={i}><td style={{color:t.tierColor,fontWeight:600}}>{t.tier}</td><td>{t.product}</td><td>{t.reason}</td></tr>)}
+        </tbody></table>
+        <div className="hl green"><strong>销售要点：</strong>乐奇最轻49g+AI模型最多5个+价格最低。¥3,299是三强中最便宜。</div></div>}
+        {tab === '618' && <div className="tab-content"><table><tbody>
+          <tr><th>排名</th><th>产品</th><th>类型</th><th>备注</th></tr>
+          {RANKING_618.map((r,i) => <tr key={i}><td style={r.highlight?{color:'var(--link-dark)',fontWeight:700}:{fontWeight:600}}>{r.rank}</td><td><strong>{r.product}</strong></td><td>{r.type}</td><td>{r.note}</td></tr>)}
+        </tbody></table>
+        <div className="hl blue"><strong>关键数据：</strong>千问是2026上半年最大黑马，线上份额一度53%，618前十占4款。乐奇618销量第1。</div></div>}
+      </div>
+    </div>
+  );
+}
+
+function FAQSlide({ search }) {
+  const sq = search && ['多少钱','续航','近视','防水','充电','录像','开车','屏幕','ai','模型','微信','手机','保修','退换','影目','华为','雷鸟','bolon','价格'].some(k=>search.includes(k)) ? search : '';
+  return (
+    <div className="slide section-slide alt" id="faq" data-search>
+      <div className="slide-content">
+        <div className="slide-tag blue">FAQ</div>
+        <div className="slide-title">常见问题</div>
+        <div className="slide-subtitle">客户最常问的 17 个问题</div>
+        <Accordion items={FAQ_ITEMS} search={sq} />
+      </div>
+    </div>
+  );
+}
+
+function ObjectionSlide({ search }) {
+  const sq = search && ['太贵','续航','屏幕','隐私','华为','小米','品牌','2499'].some(k=>search.includes(k)) ? search : '';
+  return (
+    <div className="slide section-slide" id="objection" data-search>
+      <div className="slide-content">
+        <div className="slide-tag orange">异议</div>
+        <div className="slide-title">异议处理话术</div>
+        <div className="slide-subtitle">客户说"太贵了"，你怎么回？</div>
+        <Accordion items={OBJECTION_ITEMS} iconType="warn" search={sq} />
+      </div>
+    </div>
+  );
+}
+
+function UsersSlide() {
+  return (
+    <div className="slide section-slide alt" id="users" data-search>
+      <div className="slide-content">
+        <div className="slide-tag green">用户</div>
+        <div className="slide-title">谁会买乐奇？</div>
+        <div className="slide-subtitle">6 大目标用户画像</div>
+        <div className="persona-grid">
+          {PERSONAS.map((p,i) => <div key={i} className={`persona-card fade-in stagger-${(i%6)+1}`}><div className="emoji">{p.emoji}</div><div className="role">{p.role}</div><div className="scene">{p.scene}</div></div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ServiceSlide() {
+  return (
+    <div className="slide section-slide" id="service" data-search>
+      <div className="slide-content">
+        <div className="slide-tag blue">服务</div>
+        <div className="slide-title">配件 · 渠道 · 售后</div>
+        <div className="grid-3">
+          <div className="glass-card" id="accessories" data-search>
+            <h3>🔌 配件</h3>
+            <div className="hl red" style={{margin:'8px 0'}}><strong>不含充电盒</strong></div>
+            <table><tbody><tr><th>配件</th><th>价格</th></tr>{ACCESSORIES.map((a,i)=><tr key={i}><td>{a.name}</td><td>{a.price}</td></tr>)}</tbody></table>
+          </div>
+          <div className="glass-card" id="channels" data-search>
+            <h3>🏬 渠道</h3>
+            <table><tbody><tr><th>线上</th><th>店铺</th></tr><tr><td>京东</td><td>ROKID 自营旗舰店</td></tr><tr><td>天猫</td><td>Rokid 官方旗舰店</td></tr><tr><td>抖音</td><td>Rokid 官方旗舰店</td></tr></tbody></table>
+            <table><tbody><tr><th>线下</th><th>详情</th></tr><tr><td>覆盖</td><td>全国34省 1000+门店</td></tr><tr><td>合作</td><td>毛源昌、红星眼镜</td></tr><tr><td>山姆</td><td>北京/深圳/宁波等</td></tr></tbody></table>
+            <div className="hl red"><strong>注意：</strong>宝岛眼镜是台湾渠道。大陆不提及。</div>
+          </div>
+          <div className="glass-card" id="yodaos" data-search>
+            <h3>💻 YodaOS + 售后</h3>
+            <div className="grid-2" style={{gap:'8px',margin:'8px 0'}}>
+              <div style={{textAlign:'center',padding:'12px',background:'rgba(255,255,255,0.03)',borderRadius:'12px'}}><div style={{fontSize:'22px',fontWeight:700,color:'var(--link-dark)'}}>20次</div><div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>OTA升级</div></div>
+              <div style={{textAlign:'center',padding:'12px',background:'rgba(255,255,255,0.03)',borderRadius:'12px'}}><div style={{fontSize:'22px',fontWeight:700,color:'var(--green)'}}>440+</div><div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>智能体</div></div>
+            </div>
+            <table><tbody><tr><th>售后</th><th>政策</th></tr><tr><td>保修</td><td>12个月质保</td></tr><tr><td>退货</td><td>30天可退</td></tr><tr><td>质量问题</td><td>7天退/15天换</td></tr><tr><td>额外</td><td>RokidCare碎屏</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== App ====================
+function App() {
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [animate, setAnimate] = useState(false);
+
+  const allIds = useMemo(() => ['hero','specs','price','points','scenes','ai','pay','compare','faq','objection','users','service'], []);
+  const activeId = useScrollSpy(allIds);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimate(true), 500);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCmdOpen(true); }
+      if (e.key === '/' && !cmdOpen) { e.preventDefault(); setCmdOpen(true); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [cmdOpen]);
+
+  const handleNav = useCallback((id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  const searchLower = search.toLowerCase().trim();
+  useEffect(() => {
+    if (!searchLower) {
+      document.querySelectorAll('[data-search]').forEach(el => el.classList.remove('search-hidden'));
+      return;
+    }
+    document.querySelectorAll('[data-search]').forEach(el => {
+      if (el.textContent.toLowerCase().includes(searchLower)) el.classList.remove('search-hidden');
+      else el.classList.add('search-hidden');
+    });
+  }, [searchLower]);
+
+  return (
+    <div>
+      <button className="search-fab" onClick={() => setCmdOpen(true)}>
+        🔍<span className="kbd">⌘K</span>
+      </button>
+      <div className="mobile-search">
+        <button className="mobile-search-btn" onClick={() => setCmdOpen(true)}>
+          🔍 搜索功能、参数、话术...
+        </button>
+      </div>
+      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} onNavigate={handleNav} />
+      <Dock activeId={activeId} onNav={handleNav} />
+
+      <HeroSlide />
+      <SpecsSlide animate={animate} />
+      <PriceSlide />
+      <PointsSlide />
+      <ScenesSlide />
+      <AISlide />
+      <PaySlide />
+      <CompareSlide animate={animate} />
+      <FAQSlide search={searchLower} />
+      <ObjectionSlide search={searchLower} />
+      <UsersSlide />
+      <ServiceSlide />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
